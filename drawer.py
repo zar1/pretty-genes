@@ -1,5 +1,7 @@
 from collections import namedtuple, deque
 import matplotlib.pyplot as plt 
+import shapely.geometry as sg
+import descartes
 
 class Strand:
     """Enum of possibilities for strand"""
@@ -75,11 +77,49 @@ class GeneDrawer:
                 self.__default_format_kwargs)
         format_kwargs = format_args.kwargs
         marker = format_args.marker
+        upper_left = (gene_start, 0)
+        upper_right = (gene_end, 0)
+        lower_right = (gene_end, -2)
+        lower_left = (gene_start, -2)
+        rect = sg.Polygon((upper_left, upper_right, lower_right, lower_left))
+        if (marker != Marker.NONE and 
+            (not (gene_strand == Strand.NEG and torn_left)) and
+            (not (gene_strand == Strand.POS and torn_right))):
+            # TODO maybe there's a more elegant way to get our marker width
+            x_axis_left, x_axis_right = fig.axes.get_xlim()
+            marker_width = (x_axis_right - x_axis_left) * 0.02
+            if marker == Marker.RIGHT:
+                if gene_strand == Strand.POS:
+                    pts = (upper_right, lower_right, (gene_end - marker_width,
+                                                      0))
+                else:
+                    pts = (upper_left, lower_left, (gene_start + marker_width,
+                                                    0))
+            elif marker == Marker.ISOSCELES:
+                if gene_strand == Strand.POS:
+                    pts = ((gene_end - marker_width, 0),
+                           upper_right,
+                           lower_right,
+                           (gene_end - marker_width, -2),
+                           (gene_end-1, -1))
+                else:
+                    pts = (upper_left,
+                           (gene_start + marker_width, 0),
+                           (gene_start+1, -1),
+                           (gene_start + marker_width, -2),
+                           lower_left)
+            marker_cut = sg.Polygon(pts)
+            rect = rect.difference(marker_cut)
+        # Rather than starting w/ a small rectangle and painting other object on,
+        # we start w/ a large rectangle and then cut other objects off
+        # Fancy shape manipulation:
+        # http://stackoverflow.com/questions/27947054/coloring-intersection-of-circles-patches-in-matplotlib
         #TODO direction, marker, tear, etc.
         #TODO y-values
-        rect = plt.Rectangle((gene_start, -2), gene_end - gene_start,
-                             2, **format_kwargs) 
-        fig.add_patch(rect)
+#        rect = plt.Rectangle((gene_start, -2), gene_end - gene_start,
+#                             2, **format_kwargs) 
+        fig.add_patch(descartes.PolygonPatch(rect, **format_kwargs))
+        #fig.add_patch(descartes.PolygonPatch(marker_cut, fc='g'))
 
     def __plot_one_line(self, start, end, stream, fig):
             # Make a subplot
@@ -91,7 +131,7 @@ class GeneDrawer:
                 gene_start = gene.start
                 gene_end = gene.end
                 torn_right = False
-                if gene_start > end:
+                if gene_start >= end:
                     stream.appendleft((torn_left, gene))
                     return
                 if gene_end > end:
@@ -136,7 +176,7 @@ class GeneDrawer:
             this_end = this_start + pairs_per_line
             subfig = fig.add_subplot(self.__number_of_lines, 1, line + 1)
             subfig.set_xlim((this_start, this_end))
-            subfig.set_ylim((-3, 0))
+            subfig.set_ylim((-3, 1))
             subfig.axes.yaxis.set_visible(False)
             subfig.axes.xaxis.tick_top()
             subfig.axes.xaxis.set_label_position('top')
@@ -162,10 +202,12 @@ class GeneDrawer:
 if __name__ == '__main__':
     start = 1
     end = 3000
-    genes = [Gene('JOHNGENE', Strand.NEG, gene_start, gene_end) for 
-             gene_start, gene_end in
-             [(276, 518), (732, 1000), (1500, 2000), (2200, 3000)]]
+    genes = [Gene(name, strand, gene_start, gene_end) for 
+             name, gene_start, gene_end, strand in
+             [('JOHN', 276, 518, Strand.NEG), ('JOHN', 732, 1000, Strand.POS), ('ZACH', 1500, 2000, Strand.NEG), ('ZACH', 2200, 3000, Strand.POS)]]
     d = GeneDrawer(5)
+    d.add_format('JOHN', marker=Marker.ISOSCELES, fc='g')
+    d.add_format('ZACH', marker=Marker.RIGHT, fc='b')
     plot = d.run(start, end, genes)
     plot.show()
     import pdb; pdb.set_trace()
