@@ -77,7 +77,7 @@ class GeneDrawer:
         marker = format_args.marker
         #TODO direction, marker, tear, etc.
         #TODO y-values
-        rect = plt.Rectangle((gene_start, 0), gene_end - gene_start,
+        rect = plt.Rectangle((gene_start, -2), gene_end - gene_start,
                              2, **format_kwargs) 
         fig.add_patch(rect)
 
@@ -136,8 +136,10 @@ class GeneDrawer:
             this_end = this_start + pairs_per_line
             subfig = fig.add_subplot(self.__number_of_lines, 1, line + 1)
             subfig.set_xlim((this_start, this_end))
-            subfig.set_ylim((0, 3))
+            subfig.set_ylim((-3, 0))
             subfig.axes.yaxis.set_visible(False)
+            subfig.axes.xaxis.tick_top()
+            subfig.axes.xaxis.set_label_position('top')
             self.__plot_one_line(
                 this_start,
                 this_end,
