@@ -147,7 +147,12 @@ class GeneDrawer:
                     torn_right,  
                     fig)
          
-    def run(self, start, end, genes):
+    def run(
+            self, 
+            start, 
+            end, 
+            genes, 
+            figure_kwargs={'figsize': (40, 30), 'dpi': 150}):
         """
         Parameters
         ----------
@@ -157,13 +162,15 @@ class GeneDrawer:
             last gene to display
         genes: list of Gene
             genes to display
+        figure_kwargs: dict
+            arguments to pass to plt.figure()
 
         Returns
         -------
         Matplotlib figure     
 
         """
-        fig = plt.figure()
+        fig = plt.figure(**figure_kwargs)
         # the first element of the tuple is whether or not the gene
         # has been torn on the left
         genes_remaining = deque([(False, gene) for gene in genes])
@@ -197,17 +204,17 @@ class GeneDrawer:
 #                this_start + pairs_last_line,
 #                genes_remaining,
 #                subfig)
+        fig.tight_layout()
         return fig
     
 if __name__ == '__main__':
     start = 1
-    end = 3000
+    end = 4000000
     genes = [Gene(name, strand, gene_start, gene_end) for 
              name, gene_start, gene_end, strand in
-             [('JOHN', 276, 518, Strand.NEG), ('JOHN', 732, 1000, Strand.POS), ('ZACH', 1500, 2000, Strand.NEG), ('ZACH', 2200, 3000, Strand.POS)]]
-    d = GeneDrawer(5)
+             [('JOHN', 276, 4276, Strand.NEG), ('JOHN', 100000, 104000, Strand.POS), ('ZACH', 1000000, 1004000, Strand.NEG), ('ZACH', 2000000, 2004000, Strand.POS)]]
+    d = GeneDrawer(30)
     d.add_format('JOHN', marker=Marker.ISOSCELES, fc='g')
     d.add_format('ZACH', marker=Marker.RIGHT, fc='b')
     plot = d.run(start, end, genes)
-    plot.show()
-    import pdb; pdb.set_trace()
+    plot.savefig('pretty_genes.eps', format='eps')
