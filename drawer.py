@@ -79,15 +79,15 @@ class GeneDrawer:
         marker = format_args.marker
         upper_left = (gene_start, 0)
         upper_right = (gene_end, 0)
-        lower_right = (gene_end, -2)
-        lower_left = (gene_start, -2)
+        lower_right = (gene_end, -1)
+        lower_left = (gene_start, -1)
         rect = sg.Polygon((upper_left, upper_right, lower_right, lower_left))
         if (marker != Marker.NONE and 
             (not (gene_strand == Strand.NEG and torn_left)) and
             (not (gene_strand == Strand.POS and torn_right))):
             # TODO maybe there's a more elegant way to get our marker width
             x_axis_left, x_axis_right = fig.axes.get_xlim()
-            marker_width = (x_axis_right - x_axis_left) * 0.02
+            marker_width = (x_axis_right - x_axis_left) * 0.002
             if marker == Marker.RIGHT:
                 if gene_strand == Strand.POS:
                     pts = (upper_right, lower_right, (gene_end - marker_width,
@@ -100,13 +100,13 @@ class GeneDrawer:
                     pts = ((gene_end - marker_width, 0),
                            upper_right,
                            lower_right,
-                           (gene_end - marker_width, -2),
-                           (gene_end-1, -1))
+                           (gene_end - marker_width, -1),
+                           (gene_end-1, -0.5))
                 else:
                     pts = (upper_left,
                            (gene_start + marker_width, 0),
-                           (gene_start+1, -1),
-                           (gene_start + marker_width, -2),
+                           (gene_start+1, -0.5),
+                           (gene_start + marker_width, -1),
                            lower_left)
             marker_cut = sg.Polygon(pts)
             rect = rect.difference(marker_cut)
@@ -114,12 +114,9 @@ class GeneDrawer:
         # we start w/ a large rectangle and then cut other objects off
         # Fancy shape manipulation:
         # http://stackoverflow.com/questions/27947054/coloring-intersection-of-circles-patches-in-matplotlib
-        #TODO direction, marker, tear, etc.
-        #TODO y-values
-#        rect = plt.Rectangle((gene_start, -2), gene_end - gene_start,
-#                             2, **format_kwargs) 
         fig.add_patch(descartes.PolygonPatch(rect, **format_kwargs))
-        #fig.add_patch(descartes.PolygonPatch(marker_cut, fc='g'))
+        fig.text(gene_start, -2, gene_name)
+
 
     def __plot_one_line(self, start, end, stream, fig):
             # Make a subplot
